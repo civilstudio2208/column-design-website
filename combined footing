@@ -1,0 +1,68 @@
+# Combined Footing Design Calculation
+
+# Given Data
+P1 = 150  # kN
+P2 = 350  # kN
+spacing = 3.5  # m (centre to centre)
+SBC = 150  # kN/m²
+fck = 25  # N/mm²
+fy = 500  # N/mm²
+cover = 0.05  # m
+
+# Step 1: Total Load
+total_load = P1 + P2  # kN
+
+# Adding self-weight of footing (Assume 10% of total load)
+sw_load = 0.1 * total_load  # kN
+
+net_load = total_load + sw_load  # kN
+
+# Step 2: Required Area of Footing
+area_req = net_load / SBC  # m²
+
+# Step 3: Length of Footing
+length_footing = spacing + 1.0  # Assume 0.5m projection both sides
+
+# Step 4: Width of Footing
+width_footing = area_req / length_footing  # m
+
+print("Length of Footing (L) = ", round(length_footing, 2), "m")
+print("Width of Footing (B) = ", round(width_footing, 2), "m")
+
+# Step 5: Soil Pressure
+soil_pressure = net_load / (length_footing * width_footing)  # kN/m²
+print("Soil Pressure = ", round(soil_pressure, 2), "kN/m²")
+
+# Step 6: Moment Calculation (Maximum moment under columns)
+M = (P2 * (spacing / 2)) * (spacing / 2) / length_footing  # kNm
+
+print("Maximum Bending Moment = ", round(M, 2), "kNm")
+
+# Step 7: Depth Calculation
+# Mu = 0.138 * fck * b * d²
+# Assuming b = 1000 mm for calculation per meter width
+import math
+
+d = math.sqrt((M * 10**6) / (0.138 * fck * 1000))  # mm
+d = d / 1000  # convert to m
+effective_depth = d + cover
+
+print("Effective Depth Required = ", round(effective_depth, 3), "m")
+
+# Step 8: Provide Depth (Adopt higher for safety)
+adopted_depth = round(effective_depth + 0.05, 2)  # m
+print("Adopted Overall Depth = ", adopted_depth, "m")
+
+# Step 9: Reinforcement Calculation
+# Ast = (M * 10^6) / (0.87 * fy * 0.9 * d * 1000)
+
+Ast = (M * 10**6) / (0.87 * fy * 0.9 * d * 1000)  # mm² per m width
+print("Steel Area Required Ast = ", round(Ast, 2), "mm²/m")
+
+# Step 10: Provide Bars
+bar_dia = 16  # mm
+area_bar = (3.1416 * bar_dia ** 2) / 4  # mm²
+spacing_provided = (1000 * area_bar) / Ast  # mm
+
+print("Provide ", bar_dia, "mm dia bars @ ", round(spacing_provided, 0), "mm c/c")
+
