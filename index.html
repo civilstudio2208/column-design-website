@@ -1,44 +1,161 @@
-<h1>Column Design Procedure (IS 456:2000)</h1>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Column Design (IS 456:2000)</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        h1, h2 {
+            color: #333;
+        }
+        .input-section, .result-section {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin: 10px 0 5px;
+            font-weight: bold;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <h1>Column Design Procedure (IS 456:2000)</h1>
 
-<h2>Given Data</h2>
-<ul>
-  <li>Concrete Grade: M25</li>
-  <li>Steel Grade: Fe415</li>
-  <li>Axial Load (Pu): 1500 kN</li>
-  <li>Moments: Mux = 50 kNm, Muy = 30 kNm</li>
-  <li>Column Size: 300 mm x 500 mm</li>
-  <li>Clear Cover: 40 mm</li>
-</ul>
+    <div class="input-section">
+        <h2>Input Data</h2>
+        <label>Concrete Grade (e.g., M25):</label>
+        <input type="text" id="concreteGrade" value="M25" oninput="calculate()">
+        
+        <label>Steel Grade (e.g., Fe415):</label>
+        <input type="text" id="steelGrade" value="Fe415" oninput="calculate()">
+        
+        <label>Axial Load (Pu, kN):</label>
+        <input type="number" id="axialLoad" value="1500" oninput="calculate()">
+        
+        <label>Moment Mux (kNm):</label>
+        <input type="number" id="mux" value="50" oninput="calculate()">
+        
+        <label>Moment Muy (kNm):</label>
+        <input type="number" id="muy" value="30" oninput="calculate()">
+        
+        <label>Column Size (Width x Depth, mm):</label>
+        <input type="number" id="width" value="300" style="width: 48%; margin-right: 4%;" oninput="calculate()">
+        <input type="number" id="depth" value="500" style="width: 48%;" oninput="calculate()">
+        
+        <label>Clear Cover (mm):</label>
+        <input type="number" id="clearCover" value="40" oninput="calculate()">
+    </div>
 
-<h2>Step 1: Slenderness Check</h2>
-<p>Effective Length (Both ends restrained): Leff = 0.65 × 3.3m = 2145 mm</p>
-<p>Slenderness Ratio = 2145 / 300 = 7.15 &lt; 12 (Short Column)</p>
+    <div class="result-section">
+        <h2>Results</h2>
+        <div id="slenderness"></div>
+        <div id="eccentricity"></div>
+        <div id="axialCapacity"></div>
+        <div id="reinforcement"></div>
+        <h2>Summary</h2>
+        <table id="summaryTable">
+            <tr><th>Particular</th><th>Value</th></tr>
+        </table>
+    </div>
 
-<h2>Step 2: Minimum Eccentricity</h2>
-<p>emin = (l/500) + (D/30) = 23.27 mm</p>
-<p>Minimum Moment = Pu × emin = 34.9 kNm</p>
+    <script>
+        function calculate() {
+            // Get input values
+            const concreteGrade = document.getElementById('concreteGrade').value;
+            const steelGrade = document.getElementById('steelGrade').value;
+            const Pu = parseFloat(document.getElementById('axialLoad').value) || 0;
+            const Mux = parseFloat(document.getElementById('mux').value) || 0;
+            const Muy = parseFloat(document.getElementById('muy').value) || 0;
+            const width = parseFloat(document.getElementById('width').value) || 0;
+            const depth = parseFloat(document.getElementById('depth').value) || 0;
+            const clearCover = parseFloat(document.getElementById('clearCover').value) || 0;
 
-<h2>Step 3: Axial Load Capacity</h2>
-<p>Gross Area = 300 × 500 = 150000 mm²</p>
-<p>Steel Required = 0.8% to 6% of Ag = 1200 mm² to 9000 mm²</p>
-<p>Provide 1% Steel = 1500 mm²</p>
-<p>Axial Capacity = 1902 kN &gt; 1500 kN (Safe)</p>
+            // Step 1: Slenderness Check (Assuming effective length = 3.3m)
+            const Leff = 0.65 * 3300; // mm
+            const slendernessRatio = Leff / width;
+            const isShortColumn = slendernessRatio < 12 ? "Short Column" : "Long Column";
+            document.getElementById('slenderness').innerHTML = `
+                <p>Effective Length: ${Leff} mm</p>
+                <p>Slenderness Ratio: ${slendernessRatio.toFixed(2)} (${isShortColumn})</p>
+            `;
 
-<h2>Step 4: Combined Load & Moment Check</h2>
-<p>Use SP 16 Charts (Safe with 1% Reinforcement)</p>
+            // Step 2: Minimum Eccentricity
+            const emin = (Leff / 500) + (depth / 30);
+            const minMoment = (Pu * emin / 1000).toFixed(1); // kNm
+            document.getElementById('eccentricity').innerHTML = `
+                <p>Minimum Eccentricity: ${emin.toFixed(2)} mm</p>
+                <p>Minimum Moment: ${minMoment} kNm</p>
+            `;
 
-<h2>Step 5: Reinforcement Details</h2>
-<ul>
-  <li>Longitudinal Reinforcement: 6 Nos. 20 mm Dia Bars (Ast = 1884 mm²)</li>
-  <li>Lateral Ties: 8 mm dia @ 250 mm c/c</li>
-</ul>
+            // Step 3: Axial Load Capacity
+            const Ag = width * depth; // mm²
+            const minSteel = 0.008 * Ag; // 0.8%
+            const maxSteel = 0.06 * Ag; // 6%
+            const providedSteel = 0.01 * Ag; // 1%
+            const fck = parseInt(concreteGrade.slice(1)); // Extract number from M25
+            const fy = parseInt(steelGrade.slice(2)); // Extract number from Fe415
+            const axialCapacity = (0.4 * fck * (Ag - providedSteel) + 0.67 * fy * providedSteel) / 1000; // kN
+            const isSafe = axialCapacity > Pu ? "Safe" : "Unsafe";
+            document.getElementById('axialCapacity').innerHTML = `
+                <p>Gross Area: ${Ag} mm²</p>
+                <p>Steel Required: ${minSteel.toFixed(0)} mm² to ${maxSteel.toFixed(0)} mm²</p>
+                <p>Provided Steel (1%): ${providedSteel.toFixed(0)} mm²</p>
+                <p>Axial Capacity: ${axialCapacity.toFixed(0)} kN (${isSafe})</p>
+            `;
 
-<h2>Summary</h2>
-<table>
-  <tr><th>Particular</th><th>Value</th></tr>
-  <tr><td>Column Size</td><td>300 mm x 500 mm</td></tr>
-  <tr><td>Concrete Grade</td><td>M25</td></tr>
-  <tr><td>Steel Grade</td><td>Fe415</td></tr>
-  <tr><td>Longitudinal Steel</td><td>6 Nos. 20 mm dia</td></tr>
-  <tr><td>Stirrups</td><td>8 mm @ 250 mm c/c</td></tr>
-</table>
+            // Step 4 & 5: Reinforcement (Simplified)
+            const barDia = 20; // Assuming 20 mm bars
+            const numBars = Math.ceil(providedSteel / (Math.PI * barDia * barDia / 4));
+            const Ast = numBars * (Math.PI * barDia * barDia / 4);
+            document.getElementById('reinforcement').innerHTML = `
+                <p>Longitudinal Reinforcement: ${numBars} Nos. ${barDia} mm Dia Bars (Ast = ${Ast.toFixed(0)} mm²)</p>
+                <p>Lateral Ties: 8 mm dia @ 250 mm c/c</p>
+            `;
+
+            // Summary Table
+            document.getElementById('summaryTable').innerHTML = `
+                <tr><th>Particular</th><th>Value</th></tr>
+                <tr><td>Column Size</td><td>${width} mm x ${depth} mm</td></tr>
+                <tr><td>Concrete Grade</td><td>${concreteGrade}</td></tr>
+                <tr><td>Steel Grade</td><td>${steelGrade}</td></tr>
+                <tr><td>Longitudinal Steel</td><td>${numBars} Nos. ${barDia} mm dia</td></tr>
+                <tr><td>Stirrups</td><td>8 mm @ 250 mm c/c</td></tr>
+            `;
+        }
+
+        // Initial calculation
+        calculate();
+    </script>
+</body>
+</html>
