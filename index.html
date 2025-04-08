@@ -6,87 +6,117 @@
     <title>Column Design (IS 456:2000)</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            max-width: 900px;
             margin: 0 auto;
             padding: 20px;
-            background-color: #f4f4f4;
-        }
-        h1, h2 {
+            background-color: #f0f2f5;
             color: #333;
         }
+        h1 {
+            text-align: center;
+            color: #1a73e8;
+            margin-bottom: 30px;
+        }
+        h2 {
+            color: #444;
+            border-bottom: 2px solid #1a73e8;
+            padding-bottom: 5px;
+        }
+        .container {
+            display: flex;
+            gap: 20px;
+        }
         .input-section, .result-section {
+            flex: 1;
             background: #fff;
             padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
         label {
             display: block;
-            margin: 10px 0 5px;
-            font-weight: bold;
+            margin: 15px 0 5px;
+            font-weight: 600;
+            color: #555;
         }
         input {
             width: 100%;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 14px;
             box-sizing: border-box;
+            transition: border-color 0.3s;
+        }
+        input:focus {
+            border-color: #1a73e8;
+            outline: none;
+        }
+        .result-section p {
+            margin: 10px 0;
+            font-size: 14px;
         }
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 10px;
+            margin-top: 15px;
         }
         th, td {
             border: 1px solid #ddd;
-            padding: 8px;
+            padding: 10px;
             text-align: left;
         }
         th {
-            background-color: #f2f2f2;
+            background-color: #1a73e8;
+            color: #fff;
+        }
+        td {
+            background-color: #f9f9f9;
         }
     </style>
 </head>
 <body>
     <h1>Column Design Procedure (IS 456:2000)</h1>
+    <div class="container">
+        <div class="input-section">
+            <h2>Input Data</h2>
+            <label>Concrete Grade (e.g., M25):</label>
+            <input type="text" id="concreteGrade" value="M25" oninput="calculate()">
+            
+            <label>Steel Grade (e.g., Fe415):</label>
+            <input type="text" id="steelGrade" value="Fe415" oninput="calculate()">
+            
+            <label>Axial Load (Pu, kN):</label>
+            <input type="number" id="axialLoad" value="1500" oninput="calculate()">
+            
+            <label>Moment Mux (kNm):</label>
+            <input type="number" id="mux" value="50" oninput="calculate()">
+            
+            <label>Moment Muy (kNm):</label>
+            <input type="number" id="muy" value="30" oninput="calculate()">
+            
+            <label>Column Width (mm):</label>
+            <input type="number" id="width" value="300" oninput="calculate()">
+            
+            <label>Column Depth (mm):</label>
+            <input type="number" id="depth" value="500" oninput="calculate()">
+            
+            <label>Clear Cover (mm):</label>
+            <input type="number" id="clearCover" value="40" oninput="calculate()">
+        </div>
 
-    <div class="input-section">
-        <h2>Input Data</h2>
-        <label>Concrete Grade (e.g., M25):</label>
-        <input type="text" id="concreteGrade" value="M25" oninput="calculate()">
-        
-        <label>Steel Grade (e.g., Fe415):</label>
-        <input type="text" id="steelGrade" value="Fe415" oninput="calculate()">
-        
-        <label>Axial Load (Pu, kN):</label>
-        <input type="number" id="axialLoad" value="1500" oninput="calculate()">
-        
-        <label>Moment Mux (kNm):</label>
-        <input type="number" id="mux" value="50" oninput="calculate()">
-        
-        <label>Moment Muy (kNm):</label>
-        <input type="number" id="muy" value="30" oninput="calculate()">
-        
-        <label>Column Size (Width x Depth, mm):</label>
-        <input type="number" id="width" value="300" style="width: 48%; margin-right: 4%;" oninput="calculate()">
-        <input type="number" id="depth" value="500" style="width: 48%;" oninput="calculate()">
-        
-        <label>Clear Cover (mm):</label>
-        <input type="number" id="clearCover" value="40" oninput="calculate()">
-    </div>
-
-    <div class="result-section">
-        <h2>Results</h2>
-        <div id="slenderness"></div>
-        <div id="eccentricity"></div>
-        <div id="axialCapacity"></div>
-        <div id="reinforcement"></div>
-        <h2>Summary</h2>
-        <table id="summaryTable">
-            <tr><th>Particular</th><th>Value</th></tr>
-        </table>
+        <div class="result-section">
+            <h2>Results</h2>
+            <div id="slenderness"></div>
+            <div id="eccentricity"></div>
+            <div id="axialCapacity"></div>
+            <div id="reinforcement"></div>
+            <h2>Summary</h2>
+            <table id="summaryTable">
+                <tr><th>Particular</th><th>Value</th></tr>
+            </table>
+        </div>
     </div>
 
     <script>
@@ -101,7 +131,7 @@
             const depth = parseFloat(document.getElementById('depth').value) || 0;
             const clearCover = parseFloat(document.getElementById('clearCover').value) || 0;
 
-            // Step 1: Slenderness Check (Assuming effective length = 3.3m)
+            // Step 1: Slenderness Check (Assuming Leff = 3.3m)
             const Leff = 0.65 * 3300; // mm
             const slendernessRatio = Leff / width;
             const isShortColumn = slendernessRatio < 12 ? "Short Column" : "Long Column";
@@ -114,8 +144,8 @@
             const emin = (Leff / 500) + (depth / 30);
             const minMoment = (Pu * emin / 1000).toFixed(1); // kNm
             document.getElementById('eccentricity').innerHTML = `
-                <p>Minimum Eccentricity: ${emin.toFixed(2)} mm</p>
-                <p>Minimum Moment: ${minMoment} kNm</p>
+                <p>Min Eccentricity: ${emin.toFixed(2)} mm</p>
+                <p>Min Moment: ${minMoment} kNm</p>
             `;
 
             // Step 3: Axial Load Capacity
@@ -123,8 +153,8 @@
             const minSteel = 0.008 * Ag; // 0.8%
             const maxSteel = 0.06 * Ag; // 6%
             const providedSteel = 0.01 * Ag; // 1%
-            const fck = parseInt(concreteGrade.slice(1)); // Extract number from M25
-            const fy = parseInt(steelGrade.slice(2)); // Extract number from Fe415
+            const fck = parseInt(concreteGrade.slice(1)) || 25; // Default to 25 if invalid
+            const fy = parseInt(steelGrade.slice(2)) || 415; // Default to 415 if invalid
             const axialCapacity = (0.4 * fck * (Ag - providedSteel) + 0.67 * fy * providedSteel) / 1000; // kN
             const isSafe = axialCapacity > Pu ? "Safe" : "Unsafe";
             document.getElementById('axialCapacity').innerHTML = `
@@ -135,11 +165,11 @@
             `;
 
             // Step 4 & 5: Reinforcement (Simplified)
-            const barDia = 20; // Assuming 20 mm bars
+            const barDia = 20; // Fixed 20 mm bars
             const numBars = Math.ceil(providedSteel / (Math.PI * barDia * barDia / 4));
             const Ast = numBars * (Math.PI * barDia * barDia / 4);
             document.getElementById('reinforcement').innerHTML = `
-                <p>Longitudinal Reinforcement: ${numBars} Nos. ${barDia} mm Dia Bars (Ast = ${Ast.toFixed(0)} mm²)</p>
+                <p>Longitudinal Steel: ${numBars} Nos. ${barDia} mm Dia (Ast = ${Ast.toFixed(0)} mm²)</p>
                 <p>Lateral Ties: 8 mm dia @ 250 mm c/c</p>
             `;
 
@@ -154,7 +184,7 @@
             `;
         }
 
-        // Initial calculation
+        // Run calculation on page load
         calculate();
     </script>
 </body>
