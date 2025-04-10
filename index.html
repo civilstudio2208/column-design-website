@@ -1,191 +1,90 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Column Design (IS 456:2000)</title>
+    <title>Axially Loaded Column Design</title>
     <style>
         body {
-            font-family: 'Segoe UI', Arial, sans-serif;
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f0f2f5;
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f7f7f7;
+        }
+
+        h1 {
             color: #333;
         }
-        h1 {
-            text-align: center;
-            color: #1a73e8;
-            margin-bottom: 30px;
-        }
-        h2 {
-            color: #444;
-            border-bottom: 2px solid #1a73e8;
-            padding-bottom: 5px;
-        }
-        .container {
-            display: flex;
-            gap: 20px;
-        }
-        .input-section, .result-section {
-            flex: 1;
-            background: #fff;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        }
+
         label {
             display: block;
-            margin: 15px 0 5px;
-            font-weight: 600;
-            color: #555;
+            margin-top: 10px;
         }
+
         input {
-            width: 100%;
+            width: 100px;
+            padding: 5px;
+            margin-top: 5px;
+        }
+
+        .result {
+            margin-top: 20px;
+            background: #fff;
             padding: 10px;
-            border: 1px solid #ccc;
             border-radius: 5px;
-            font-size: 14px;
-            box-sizing: border-box;
-            transition: border-color 0.3s;
-        }
-        input:focus {
-            border-color: #1a73e8;
-            outline: none;
-        }
-        .result-section p {
-            margin: 10px 0;
-            font-size: 14px;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px;
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 10px;
-            text-align: left;
-        }
-        th {
-            background-color: #1a73e8;
-            color: #fff;
-        }
-        td {
-            background-color: #f9f9f9;
         }
     </style>
 </head>
-<body>
-    <h1>Column Design Procedure (IS 456:2000)</h1>
-    <div class="container">
-        <div class="input-section">
-            <h2>Input Data</h2>
-            <label>Concrete Grade (e.g., M25):</label>
-            <input type="text" id="concreteGrade" value="M25" oninput="calculate()">
-            
-            <label>Steel Grade (e.g., Fe415):</label>
-            <input type="text" id="steelGrade" value="Fe415" oninput="calculate()">
-            
-            <label>Axial Load (Pu, kN):</label>
-            <input type="number" id="axialLoad" value="1500" oninput="calculate()">
-            
-            <label>Moment Mux (kNm):</label>
-            <input type="number" id="mux" value="50" oninput="calculate()">
-            
-            <label>Moment Muy (kNm):</label>
-            <input type="number" id="muy" value="30" oninput="calculate()">
-            
-            <label>Column Width (mm):</label>
-            <input type="number" id="width" value="300" oninput="calculate()">
-            
-            <label>Column Depth (mm):</label>
-            <input type="number" id="depth" value="500" oninput="calculate()">
-            
-            <label>Clear Cover (mm):</label>
-            <input type="number" id="clearCover" value="40" oninput="calculate()">
-        </div>
 
-        <div class="result-section">
-            <h2>Results</h2>
-            <div id="slenderness"></div>
-            <div id="eccentricity"></div>
-            <div id="axialCapacity"></div>
-            <div id="reinforcement"></div>
-            <h2>Summary</h2>
-            <table id="summaryTable">
-                <tr><th>Particular</th><th>Value</th></tr>
-            </table>
-        </div>
+<body>
+    <h1>Axially Loaded Column Design (IS 456:2000)</h1>
+
+    <label>Axial Load (kN): <input type="number" id="pu" value="875"></label>
+    <label>Concrete Grade fck (N/mm²): <input type="number" id="fck" value="25"></label>
+    <label>Steel Grade fy (N/mm²): <input type="number" id="fy" value="415"></label>
+    <label>Fixed Column Side (mm): <input type="number" id="fixedSide" value="300"></label>
+
+    <div class="result">
+        <h3>Results:</h3>
+        <p id="area"></p>
+        <p id="variableSide"></p>
+        <p id="asc"></p>
+        <p id="bars"></p>
+        <p id="ties"></p>
     </div>
 
     <script>
+        const inputs = document.querySelectorAll('input');
+
+        inputs.forEach(input => {
+            input.addEventListener('input', calculate);
+        });
+
         function calculate() {
-            // Get input values
-            const concreteGrade = document.getElementById('concreteGrade').value;
-            const steelGrade = document.getElementById('steelGrade').value;
-            const Pu = parseFloat(document.getElementById('axialLoad').value) || 0;
-            const Mux = parseFloat(document.getElementById('mux').value) || 0;
-            const Muy = parseFloat(document.getElementById('muy').value) || 0;
-            const width = parseFloat(document.getElementById('width').value) || 0;
-            const depth = parseFloat(document.getElementById('depth').value) || 0;
-            const clearCover = parseFloat(document.getElementById('clearCover').value) || 0;
+            const pu = parseFloat(document.getElementById('pu').value) * 1.5 * 1000;
+            const fck = parseFloat(document.getElementById('fck').value);
+            const fy = parseFloat(document.getElementById('fy').value);
+            const fixedSide = parseFloat(document.getElementById('fixedSide').value);
 
-            // Step 1: Slenderness Check (Assuming Leff = 3.3m)
-            const Leff = 0.65 * 3300; // mm
-            const slendernessRatio = Leff / width;
-            const isShortColumn = slendernessRatio < 12 ? "Short Column" : "Long Column";
-            document.getElementById('slenderness').innerHTML = `
-                <p>Effective Length: ${Leff} mm</p>
-                <p>Slenderness Ratio: ${slendernessRatio.toFixed(2)} (${isShortColumn})</p>
-            `;
+            const ag = pu / (0.4 * fck * 0.99 + 0.67 * fy * 0.01);
+            const variableSide = Math.ceil(ag / fixedSide);
+            const asc = 0.01 * ag;
 
-            // Step 2: Minimum Eccentricity
-            const emin = (Leff / 500) + (depth / 30);
-            const minMoment = (Pu * emin / 1000).toFixed(1); // kNm
-            document.getElementById('eccentricity').innerHTML = `
-                <p>Min Eccentricity: ${emin.toFixed(2)} mm</p>
-                <p>Min Moment: ${minMoment} kNm</p>
-            `;
+            const barArea = Math.PI * 16 * 16 / 4;
+            const numberOfBars = Math.ceil(asc / barArea);
 
-            // Step 3: Axial Load Capacity
-            const Ag = width * depth; // mm²
-            const minSteel = 0.008 * Ag; // 0.8%
-            const maxSteel = 0.06 * Ag; // 6%
-            const providedSteel = 0.01 * Ag; // 1%
-            const fck = parseInt(concreteGrade.slice(1)) || 25; // Default to 25 if invalid
-            const fy = parseInt(steelGrade.slice(2)) || 415; // Default to 415 if invalid
-            const axialCapacity = (0.4 * fck * (Ag - providedSteel) + 0.67 * fy * providedSteel) / 1000; // kN
-            const isSafe = axialCapacity > Pu ? "Safe" : "Unsafe";
-            document.getElementById('axialCapacity').innerHTML = `
-                <p>Gross Area: ${Ag} mm²</p>
-                <p>Steel Required: ${minSteel.toFixed(0)} mm² to ${maxSteel.toFixed(0)} mm²</p>
-                <p>Provided Steel (1%): ${providedSteel.toFixed(0)} mm²</p>
-                <p>Axial Capacity: ${axialCapacity.toFixed(0)} kN (${isSafe})</p>
-            `;
+            document.getElementById('area').innerHTML = `Gross Area Required (Ag): ${ag.toFixed(2)} mm²`;
+            document.getElementById('variableSide').innerHTML = `Adopted Size: ${fixedSide} mm x ${variableSide} mm`;
+            document.getElementById('asc').innerHTML = `Required Asc: ${asc.toFixed(2)} mm²`;
+            document.getElementById('bars').innerHTML = `Provide ${numberOfBars} bars of 16 mm dia.`;
 
-            // Step 4 & 5: Reinforcement (Simplified)
-            const barDia = 20; // Fixed 20 mm bars
-            const numBars = Math.ceil(providedSteel / (Math.PI * barDia * barDia / 4));
-            const Ast = numBars * (Math.PI * barDia * barDia / 4);
-            document.getElementById('reinforcement').innerHTML = `
-                <p>Longitudinal Steel: ${numBars} Nos. ${barDia} mm Dia (Ast = ${Ast.toFixed(0)} mm²)</p>
-                <p>Lateral Ties: 8 mm dia @ 250 mm c/c</p>
-            `;
-
-            // Summary Table
-            document.getElementById('summaryTable').innerHTML = `
-                <tr><th>Particular</th><th>Value</th></tr>
-                <tr><td>Column Size</td><td>${width} mm x ${depth} mm</td></tr>
-                <tr><td>Concrete Grade</td><td>${concreteGrade}</td></tr>
-                <tr><td>Steel Grade</td><td>${steelGrade}</td></tr>
-                <tr><td>Longitudinal Steel</td><td>${numBars} Nos. ${barDia} mm dia</td></tr>
-                <tr><td>Stirrups</td><td>8 mm @ 250 mm c/c</td></tr>
-            `;
+            const tieDia = Math.max(4, 6);
+            document.getElementById('ties').innerHTML = `Provide lateral ties of ${tieDia} mm dia.`;
         }
 
-        // Run calculation on page load
         calculate();
     </script>
+
 </body>
+
 </html>
